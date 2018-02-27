@@ -67,10 +67,7 @@ public class Spieler {
 
     public void setTipp(String[] tipps, ArrayList<Match> matchliste) throws InvalidTippException {
 
-        if (!tipps[0].contains(this.name)) {
-            throw new InvalidTippException("Erster Tipp enthaelt nicht den Namen.");
-        }
-
+       
         for (int i = 0; i < tipps.length; i++) {
             tipps[i] = tipps[i].toUpperCase();
         }

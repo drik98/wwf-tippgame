@@ -7,12 +7,19 @@ import Domain.Spieler;
 import Domain.Tippspiel;
 import Exceptions.InvalidTippException;
 import Help.InitJFrame;
+import com.teamdev.jxbrowser.chromium.Browser;
+import com.teamdev.jxbrowser.chromium.dom.By;
+import com.teamdev.jxbrowser.chromium.dom.DOMDocument;
+import com.teamdev.jxbrowser.chromium.dom.DOMElement;
+import com.teamdev.jxbrowser.chromium.dom.DOMNode;
+import com.teamdev.jxbrowser.chromium.swing.BrowserView;
 import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,8 +28,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
+import javax.swing.WindowConstants;
 
 /**
  * Panel zum Aufzeichnen eines Arbeitsgangs
@@ -117,6 +127,9 @@ public final class NewTippgame extends javax.swing.JPanel {
         auswertenBtn = new javax.swing.JButton();
         hinzufuegenBtn3 = new javax.swing.JButton();
         hinzufuegenBtn4 = new javax.swing.JButton();
+        tippgamePanel4 = new javax.swing.JLabel();
+        loadTipps = new javax.swing.JButton();
+        tippspielLink = new javax.swing.JTextField();
 
         matchesComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -205,6 +218,15 @@ public final class NewTippgame extends javax.swing.JPanel {
 
         hinzufuegenBtn4.setText("Zeige Platzierungen");
 
+        tippgamePanel4.setText("Tippspiel Link");
+
+        loadTipps.setText("Tipps Laden");
+        loadTipps.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                loadTippsActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -251,7 +273,13 @@ public final class NewTippgame extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(hinzufuegenBtn4)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(hinzufuegenBtn3)))
+                        .addComponent(hinzufuegenBtn3))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(tippgamePanel4)
+                        .addGap(164, 164, 164)
+                        .addComponent(loadTipps)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(tippspielLink)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -271,14 +299,19 @@ public final class NewTippgame extends javax.swing.JPanel {
                     .addComponent(deleteMatchBtn)
                     .addComponent(bearbeitenMatchBtn)
                     .addComponent(addMatchBtn))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(tippgamePanel4)
+                    .addComponent(loadTipps)
+                    .addComponent(tippspielLink, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(7, 7, 7)
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(1, 1, 1)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(tippgamePanel2)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addComponent(tippgamePanel3)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 84, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 59, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -369,10 +402,7 @@ public final class NewTippgame extends javax.swing.JPanel {
             anzahlMatches = db.getAnzahlMatches(selectedTippspiel);
             List<String> lines = Arrays.asList(selectedTippspiel.getTipps().split("\n"));
 
-            lines.stream().filter((x) -> (!x.isEmpty()
-                    && isNaN(x)
-                    && !x.contains("Verwalten")
-                    && !x.contains("Gefällt mir")))
+            lines.stream().filter((x) -> (!x.isEmpty()))
                     .forEach((x) -> {
                         temp.add(x);
 
@@ -381,7 +411,7 @@ public final class NewTippgame extends javax.swing.JPanel {
             lines = new ArrayList(temp);
 
             List<Spieler> spielerListe = new ArrayList<>();
-
+            System.out.println(lines.get(0));
             while (lines.size() > 0) {
 
                 Spieler player = new Spieler(null, 0);
@@ -390,6 +420,7 @@ public final class NewTippgame extends javax.swing.JPanel {
                 String[] tipp = new String[anzahlMatches];
                 for (int j = 0; j < tipp.length; j++) {
                     tipp[j] = lines.get(0);
+                    System.out.println(lines.get(0));
                     lines.remove(0);
 
                 }
@@ -427,6 +458,7 @@ public final class NewTippgame extends javax.swing.JPanel {
 //            System.out.println(temp.size());
 //            System.out.println(temp);
 //            String text = String.join("\n", temp);
+            e.printStackTrace();
             int startindex = 0;
             for (int i = 0; i < counter - anzahlMatches; i++) {
                 startindex += temp.get(i).length() + 1;
@@ -462,6 +494,101 @@ public final class NewTippgame extends javax.swing.JPanel {
 
         }
     }//GEN-LAST:event_hinzufuegenBtn3ActionPerformed
+
+    private void loadTippsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadTippsActionPerformed
+        String url = tippspielLink.getText();
+        Browser browser = new Browser();
+        BrowserView view = new BrowserView(browser);
+        JFrame frame = new JFrame("Facebook WWF Tippspiel");
+        frame.setLayout(new GridBagLayout());
+        frame.setSize(this.frame.getSize());
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+
+        JButton tippsauswerten = new JButton("Tipps einlesen");
+        tippsauswerten.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                DOMDocument document = browser.getDocument();
+                List<DOMElement> commentActorsAndBodys = document.findElements(By.className("UFICommentActorAndBody"));
+                String text = "";
+                for (DOMElement commenbtActorAndBody : commentActorsAndBodys) {
+                    String name = commenbtActorAndBody.findElement(By.className("UFICommentActorName")).getInnerText();
+                    name = (name.contains("Gruppen")) ? name.substring(0, name.lastIndexOf("Gruppen")) : name;
+                    String tippsUser = commenbtActorAndBody.findElement(By.className("UFICommentBody")).getInnerText();
+                    text += "\n" + name + "\n" + tippsUser;
+                }
+                tipps.setText(text.replaceFirst("\n", ""));
+                frame.dispose();
+            }
+        });
+
+        JButton vorherigeKommentareAnzeigen = new JButton("Vorherige Kommentare anzeigen");
+        vorherigeKommentareAnzeigen.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                browser.executeJavaScript("var vorherigeKommentareAnzeigen = document.getElementsByClassName('UFIPagerLink');"
+                        + "	while(vorherigeKommentareAnzeigen!=null && vorherigeKommentareAnzeigen.length > 0) {"
+                        + "		for (var i = 0; i < vorherigeKommentareAnzeigen.length; i++) {"
+                        + "    		vorherigeKommentareAnzeigen[i].click();"
+                        + "		}"
+                        + "		vorherigeKommentareAnzeigen = document.getElementById('UFIPagerLink');"
+                        + "    }");
+            }
+        });
+
+        JButton mehrAnzeigen = new JButton("Mehr anzeigen");
+        mehrAnzeigen.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                browser.executeJavaScript("var mehrAnzeigen = document.getElementsByClassName('_5v47 fss');"
+                        + "	while(mehrAnzeigen!=null && mehrAnzeigen.length > 0) { "
+                        + "		for (var i = 0; i < mehrAnzeigen.length; i++) {"
+                        + "    		mehrAnzeigen[i].click();"
+                        + "		}"
+                        + "		 mehrAnzeigen = document.getElementsByClassName('_5v47 fss');"
+                        + "    }");
+            }
+        });
+
+        JButton antwortListeLoeschen = new JButton("Antworten Löschen");
+        antwortListeLoeschen.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                browser.executeJavaScript("var antwortListeLoeschen = document.getElementsByClassName('UFIReplyList');"
+                        + "	while(antwortListeLoeschen!=null && antwortListeLoeschen.length > 0) { "
+                        + "		for (var i = 0; i < antwortListeLoeschen.length; i++) {"
+                        + "    		antwortListeLoeschen[i].remove();"
+                        + "		}"
+                        + "		antwortListeLoeschen = document.getElementsByClassName('UFIReplyList');"
+                        + "    }");
+            }
+        });
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.BOTH;
+        c.gridwidth = 4;
+        c.gridx = 0;
+        c.gridy = 0;
+        c.weightx = 1;
+        c.weighty = 0.9;
+        frame.add(view, c);
+        c.gridwidth = 1;
+        c.gridx = 0;
+        c.gridy = 1;
+        c.weightx = 0.25;
+        c.weighty = 0.1;
+        frame.add(vorherigeKommentareAnzeigen, c);
+        c.gridx = 1;
+        frame.add(mehrAnzeigen, c);
+        c.gridx = 2;
+        frame.add(antwortListeLoeschen, c);
+        c.gridx = 3;
+        frame.add(tippsauswerten, c);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+
+        browser.loadURL(url);
+    }//GEN-LAST:event_loadTippsActionPerformed
 
     private void print(Object text) {
         ausgabe.setText(ausgabe.getText() + text + "\n");
@@ -587,6 +714,7 @@ public final class NewTippgame extends javax.swing.JPanel {
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
+    private javax.swing.JButton loadTipps;
     private javax.swing.JComboBox matchesComboBox;
     private javax.swing.JButton speichernTippspielbtn;
     private javax.swing.JComboBox tippgameComboBox;
@@ -594,7 +722,9 @@ public final class NewTippgame extends javax.swing.JPanel {
     private javax.swing.JLabel tippgamePanel1;
     private javax.swing.JLabel tippgamePanel2;
     private javax.swing.JLabel tippgamePanel3;
+    private javax.swing.JLabel tippgamePanel4;
     private javax.swing.JTextArea tipps;
+    private javax.swing.JTextField tippspielLink;
     // End of variables declaration//GEN-END:variables
 
 }

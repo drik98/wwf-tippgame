@@ -50,7 +50,7 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="tippgameComboBox" max="32767" attributes="0"/>
                           </Group>
-                          <Group type="102" attributes="0">
+                          <Group type="102" alignment="0" attributes="0">
                               <Component id="addMatchBtn" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="bearbeitenMatchBtn" min="-2" max="-2" attributes="0"/>
@@ -69,6 +69,13 @@
                       <Component id="hinzufuegenBtn4" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="hinzufuegenBtn3" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="tippgamePanel4" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="164" max="-2" attributes="0"/>
+                      <Component id="loadTipps" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="tippspielLink" max="32767" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -94,14 +101,20 @@
                   <Component id="bearbeitenMatchBtn" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="addMatchBtn" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="tippgamePanel4" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="loadTipps" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="tippspielLink" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace min="-2" pref="7" max="-2" attributes="0"/>
               <Component id="jSeparator2" min="-2" pref="10" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="1" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="tippgamePanel2" min="-2" max="-2" attributes="0"/>
                   <Component id="jScrollPane1" pref="0" max="32767" attributes="0"/>
                   <Component id="tippgamePanel3" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="jScrollPane2" alignment="0" pref="84" max="32767" attributes="0"/>
+                  <Component id="jScrollPane2" alignment="0" pref="59" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jSeparator3" min="-2" pref="10" max="-2" attributes="0"/>
@@ -265,6 +278,21 @@
       <Properties>
         <Property name="text" type="java.lang.String" value="Zeige Platzierungen"/>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="tippgamePanel4">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Tippspiel Link"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="loadTipps">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Tipps Laden"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="loadTippsActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JTextField" name="tippspielLink">
     </Component>
   </SubComponents>
 </Form>

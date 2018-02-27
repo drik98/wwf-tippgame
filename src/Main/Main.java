@@ -25,7 +25,7 @@ public class Main {
                 MainJFrame main;
                 main = new MainJFrame();
                 main.setVisible(true);
-                InitJFrame.showStartLogo(main);
+                InitJFrame.showNewTippgame(main);
 
             }
 
