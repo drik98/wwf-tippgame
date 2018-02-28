@@ -4,8 +4,6 @@ import Domain.Ausgang;
 import Domain.Match;
 import Domain.Spieler;
 import Domain.Tippspiel;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
@@ -57,7 +55,8 @@ public class DB {
             tippspielList.add(new Tippspiel(
                     rs.getLong("id"),
                     rs.getString("name"),
-                    rs.getString("tipps")
+                    rs.getString("tipps"),
+                    rs.getString("url")
             ));
         }
         return tippspielList;
@@ -123,7 +122,8 @@ public class DB {
             t = new Tippspiel(
                     rs.getLong("id"),
                     rs.getString("name"),
-                    rs.getString("tipps"));
+                    rs.getString("tipps"),
+                    rs.getString("url"));
         }
         return t;
     }
@@ -144,7 +144,8 @@ public class DB {
             t = new Tippspiel(
                     rs.getLong("id"),
                     rs.getString("name"),
-                    rs.getString("tipps"));
+                    rs.getString("tipps"),
+                    rs.getString("url"));
         }
         return t;
     }
@@ -158,7 +159,7 @@ public class DB {
         ps.setLong(1, id);
         ps.setString(2, name);
         ps.execute();
-        return new Tippspiel(id, name, "");
+        return new Tippspiel(id, name, "", "");
     }
 
     public ArrayList<Ausgang> getAusgangsList() throws SQLException {
@@ -231,11 +232,12 @@ public class DB {
         if (t.getId() == 0) {
             t = createTippspiel(t.getName());
         }
-        ps = con.prepareStatement("UPDATE tippgame SET tipps = ?, name = ? "
+        ps = con.prepareStatement("UPDATE tippgame SET tipps = ?, name = ?, url = ? "
                 + "WHERE id = ?");
         ps.setString(1, t.getTipps());
         ps.setString(2, t.getName());
-        ps.setLong(3, t.getId());
+        ps.setString(3, t.getURL());
+        ps.setLong(4, t.getId());
         ps.execute();
         return t;
     }
@@ -273,25 +275,25 @@ public class DB {
         }
         return spielerlist;
     }
+//
+//    public ArrayList<Spieler> getSpieler(long tippgame_id) throws SQLException {
+//        ArrayList<Spieler> spielerlist = new ArrayList<>();
+//        ps = con.prepareStatement("SELECT * FROM spieler WHERE id NOT IN (SELECT spieler_id FROM tippgame_teilnehmer WHERE tippgame_id = ?)");
+//        ps.setLong(1, tippgame_id);
+//        rs = ps.executeQuery();
+//        while (rs.next()) {
+//            spielerlist.add(new Spieler(
+//                    rs.getLong("id"),
+//                    rs.getString("name"),
+//                    rs.getInt("punkte"),
+//                    rs.getInt("siege"),
+//                    rs.getInt("punkte_current_year"),
+//                    rs.getInt("siege_current_year")));
+//        }
+//        return spielerlist;
+//    }
 
-    public ArrayList<Spieler> getSpieler(long tippgame_id) throws SQLException {
-        ArrayList<Spieler> spielerlist = new ArrayList<>();
-        ps = con.prepareStatement("SELECT * FROM spieler WHERE id IN (SELECT spieler_id FROM tippgame_teilnehmer WHERE tippgame_id = ?)");
-        ps.setLong(1, tippgame_id);
-        rs = ps.executeQuery();
-        while (rs.next()) {
-            spielerlist.add(new Spieler(
-                    rs.getLong("id"),
-                    rs.getString("name"),
-                    rs.getInt("punkte"),
-                    rs.getInt("siege"),
-                    rs.getInt("punkte_current_year"),
-                    rs.getInt("siege_current_year")));
-        }
-        return spielerlist;
-    }
-
-    public void saveTippgameTeilnehmer(Long tippspielid, List<Spieler> spielerListe) throws SQLException {
+    public void saveTippgameTeilnehmerTemp(Long tippspielid, List<Spieler> spielerListe) throws SQLException {
         ps = con.prepareStatement("DELETE FROM tippgame_teilnehmer WHERE tippgame_id = ?");
         ps.setLong(1, tippspielid);
         ps.execute();
@@ -340,6 +342,57 @@ public class DB {
                     rs.getInt("siege_current_year")));
         }
         return spielerlist;
+    }
+
+    public void removeAusgang(long id) throws SQLException {
+        ps = con.prepareStatement("DELETE FROM ausgang WHERE id = ?");
+        ps.setLong(1, id);
+        ps.execute();
+        ps = con.prepareStatement("DELETE FROM match WHERE ausgang_id = ?");
+        ps.setLong(1, id);
+        ps.execute();
+    }
+
+    public Ausgang createAusgang(String ausgaenge) throws SQLException {
+        ps = con.prepareStatement("SELECT COALESCE(max(id),0) as id FROM ausgang");
+        rs = ps.executeQuery();
+        long id = (rs.next()) ? rs.getLong("id") + 1 : 1;
+
+        ps = con.prepareStatement("INSERT INTO ausgang (id, ausgang) VALUES (?, ?)");
+        ps.setLong(1, id);
+        ps.setString(2, ausgaenge);
+        ps.execute();
+        return new Ausgang(id, ausgaenge);
+    }
+
+    public Ausgang updateAusgang(Ausgang a) throws SQLException {
+        ps = con.prepareStatement("UPDATE ausgang SET ausgang = ? "
+                + "WHERE id = ?");
+        ps.setString(1, a.getAusgang());
+        ps.setLong(2, a.getId());
+        ps.execute();
+        return a;
+    }
+
+    public void removeSpieler(Long id) throws SQLException {
+        ps = con.prepareStatement("DELETE FROM spieler WHERE id = ?");
+        ps.setLong(1, id);
+        ps.execute();
+        ps = con.prepareStatement("DELETE FROM tippgame_teilnehmer WHERE spieler_id = ?");
+        ps.setLong(1, id);
+        ps.execute();
+    }
+
+    public void updateSpieler(Spieler s) throws SQLException {
+        ps = con.prepareStatement("UPDATE spieler SET name = ?, punkte = ?, punkte_current_year = ?, siege = ?, siege_current_year = ? "
+                + "WHERE id = ?");
+        ps.setString(1, s.getName());
+        ps.setInt(2, s.getPunkte());
+        ps.setInt(3, s.getPunkte_current_year());
+        ps.setInt(4, s.getSiege());
+        ps.setInt(5, s.getSiege_current_year());
+        ps.setLong(6, s.getId());
+        ps.execute();
     }
 
 }

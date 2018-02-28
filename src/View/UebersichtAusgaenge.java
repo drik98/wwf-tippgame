@@ -1,15 +1,12 @@
 package View;
 
 import Database.DB;
-import Domain.Tippspiel;
-import Help.InitJFrame;
+import Domain.Ausgang;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.table.JTableHeader;
 
@@ -18,9 +15,9 @@ import javax.swing.table.JTableHeader;
  *
  * @author sht
  */
-public class UebersichtTippspiele extends javax.swing.JPanel {
+public class UebersichtAusgaenge extends javax.swing.JPanel {
 
-    List<Tippspiel> list;
+    List<Ausgang> list;
     private DB db;
     private MainJFrame frame;
 
@@ -29,16 +26,16 @@ public class UebersichtTippspiele extends javax.swing.JPanel {
      *
      * @param frame
      */
-    public UebersichtTippspiele(MainJFrame frame) {
+    public UebersichtAusgaenge(MainJFrame frame) {
         this.frame = frame;
         initComponents();
         changeStyle();
         try {
             this.db = new DB();
-            this.list = this.db.getTippspielList();
+            this.list = this.db.getAusgangsList();
             fuelleTabelle();
         } catch (SQLException ex) {
-            Logger.getLogger(UebersichtTippspiele.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(frame, "Fehler beim Initialisieren von Matchausgängen.");
         }
     }
 
@@ -128,17 +125,17 @@ public class UebersichtTippspiele extends javax.swing.JPanel {
      * @param evt
      */
     private void entfernenBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_entfernenBtnActionPerformed
-        int confirmation = JOptionPane.showConfirmDialog(null, "Soll das Tippgame wirklich gelöscht werden?");
+        int confirmation = JOptionPane.showConfirmDialog(null, "Soll der Ausgang wirklich gelöscht werden?");
         if (confirmation == JOptionPane.YES_OPTION) {
             int index = jTable1.getSelectedRow();
             if (index >= 0) {
-                Tippspiel s = list.get(index);
+                Ausgang a = list.get(index);
                 try {
-                    db.removeTippspiel(s.getId());
-                    list = this.db.getTippspielList();
+                    db.removeAusgang(a.getId());
+                    list = this.db.getAusgangsList();
                     fuelleTabelle();
                 } catch (SQLException ex) {
-                    Logger.getLogger(UebersichtTippspiele.class.getName()).log(Level.SEVERE, null, ex);
+                    JOptionPane.showMessageDialog(frame, "Fehler beim Entfernen von Matchausgang.");
                 }
             }
         }
@@ -151,11 +148,11 @@ public class UebersichtTippspiele extends javax.swing.JPanel {
      */
     private void hinzufgnBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hinzufgnBtnActionPerformed
         try {
-            Tippspiel.createTippspiel(frame);
-            list = this.db.getTippspielList();
+            Ausgang.createAusgang(frame);
+            list = this.db.getAusgangsList();
             fuelleTabelle();
         } catch (SQLException ex) {
-            Logger.getLogger(UebersichtTippspiele.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(frame, "Fehler beim Erstellen von Matchausgang.");
         }
     }//GEN-LAST:event_hinzufgnBtnActionPerformed
 
@@ -167,8 +164,12 @@ public class UebersichtTippspiele extends javax.swing.JPanel {
     private void bearbeitenBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bearbeitenBtnActionPerformed
         int index = jTable1.getSelectedRow();
         if (index >= 0) {
-            Tippspiel t = list.get(index);
-            InitJFrame.showNewTippgame(frame, t);
+            Ausgang a = list.get(index);
+            try {
+                a.update(frame);
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(frame, "Fehler beim Updaten von Matchausgang.");
+            }
         }
     }//GEN-LAST:event_bearbeitenBtnActionPerformed
 
@@ -181,9 +182,9 @@ public class UebersichtTippspiele extends javax.swing.JPanel {
         String[] spalten = {"id", "Name"};
         Object[][] input = new Object[list.size()][spalten.length];
         int i = 0;
-        for (Tippspiel s : list) {
-            input[i][0] = s.getId();
-            input[i][1] = s.getName();
+        for (Ausgang a : list) {
+            input[i][0] = a.getId();
+            input[i][1] = a.toString();
             i++;
         }
 

@@ -7,7 +7,7 @@ import View.MainJFrame;
 import View.MainMenuBar;
 import View.NewMatch;
 import View.UebersichtTeilnehmer;
-import View.UebersichtTippspiele;
+import View.UebersichtAusgaenge;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
@@ -36,7 +36,7 @@ public class InitJFrame {
      */
     public static void showUbersichtTippgames(MainJFrame frame) {
         frame.remove(frame.getMainPanel());
-        UebersichtTippspiele panel = new UebersichtTippspiele(frame);
+        UebersichtAusgaenge panel = new UebersichtAusgaenge(frame);
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.BOTH;
         c.gridwidth = 3;

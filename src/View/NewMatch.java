@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.ListModel;
 import javax.swing.text.AbstractDocument;
@@ -30,7 +31,7 @@ public final class NewMatch extends javax.swing.JPanel {
     private Ausgang a = null;
     private String sieger = "";
     private MainJFrame frame;
-    private DefaultComboBoxModel model;
+    private DefaultListModel model;
 
     /**
      * Creates new form ArbeitsgangPanel
@@ -134,8 +135,18 @@ public final class NewMatch extends javax.swing.JPanel {
         tippgamePanel4.setText("Ausgang");
 
         bearbeitenSiegerBtn.setText("Bearbeiten");
+        bearbeitenSiegerBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bearbeitenSiegerBtnActionPerformed(evt);
+            }
+        });
 
         deleteSiegerBtn.setText("Entfernen");
+        deleteSiegerBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteSiegerBtnActionPerformed(evt);
+            }
+        });
 
         addSieger.setText("Hinzufügen");
         addSieger.addActionListener(new java.awt.event.ActionListener() {
@@ -258,6 +269,23 @@ public final class NewMatch extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_hinzufuegenBtn1ActionPerformed
 
+    private void bearbeitenSiegerBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bearbeitenSiegerBtnActionPerformed
+
+        String selectedIitem = siegerList.getSelectedValue();
+        AddTippspiel tippspielPanel = new AddTippspiel(selectedIitem);
+        int result = JOptionPane.showConfirmDialog(frame, tippspielPanel,
+                "Sieger bearbeiten", JOptionPane.OK_CANCEL_OPTION);
+        if (result == JOptionPane.OK_OPTION) {
+            model.removeElement(selectedIitem);
+            model.addElement(tippspielPanel.getBezeichnung().getText());
+
+        }
+    }//GEN-LAST:event_bearbeitenSiegerBtnActionPerformed
+
+    private void deleteSiegerBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteSiegerBtnActionPerformed
+        model.removeElement(siegerList.getSelectedValue());
+    }//GEN-LAST:event_deleteSiegerBtnActionPerformed
+
     private void initLists() {
         initTippspielList();
         ((AbstractDocument) punkte.getDocument()).setDocumentFilter(new NumberFilter());
@@ -286,7 +314,7 @@ public final class NewMatch extends javax.swing.JPanel {
             return 1;
         }
     }
-    
+
     public int getMatchnummer() {
         try {
             return Integer.parseInt(matchnummer.getText());
@@ -313,7 +341,8 @@ public final class NewMatch extends javax.swing.JPanel {
     }
 
     private void initSiegerListbox() {
-        DefaultComboBoxModel model = new DefaultComboBoxModel();
+        DefaultListModel model = new DefaultListModel();
+//        DefaultComboBoxModel model = new DefaultComboBoxModel();
         if (!sieger.isEmpty()) {
             String[] sieger = this.sieger.split(";");
             for (String s : sieger) {

@@ -48,7 +48,7 @@ public class MainMenuBar extends JMenuBar {
         this.add(menu);
 
         JMenuItem menuItem;
-        menuItem = new JMenuItem("Tippspiele", KeyEvent.VK_A);
+        menuItem = new JMenuItem("Matchausgänge", KeyEvent.VK_A);
         menuItem.addActionListener(new ActionListener() {
 
             @Override

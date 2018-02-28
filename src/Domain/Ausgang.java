@@ -5,7 +5,12 @@
  */
 package Domain;
 
+import Database.DB;
+import View.AddMatchausgang;
+import View.MainJFrame;
+import java.sql.SQLException;
 import java.util.Objects;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -36,8 +41,9 @@ public class Ausgang {
         return ausgang;
     }
 
-    public void setAusgang(String ausgang) {
+    public Ausgang setAusgang(String ausgang) {
         this.ausgang = ausgang;
+        return this;
     }
 
     @Override
@@ -49,16 +55,16 @@ public class Ausgang {
         }
         return ret.replaceFirst(" / ", "");
     }
-    
+
     @Override
     public boolean equals(Object o) {
         try {
-        if (Ausgang.class.getTypeName().equals(o.getClass().getTypeName())) {
-            return ((Ausgang) o).getId() == this.getId();
-        } else {
-            return false;
-        }
-        }catch(NullPointerException e) {
+            if (Ausgang.class.getTypeName().equals(o.getClass().getTypeName())) {
+                return ((Ausgang) o).getId() == this.getId();
+            } else {
+                return false;
+            }
+        } catch (NullPointerException e) {
             return false;
         }
     }
@@ -69,4 +75,38 @@ public class Ausgang {
         hash = 79 * hash + Objects.hashCode(this.id);
         return hash;
     }
+
+    public static Ausgang createAusgang(MainJFrame frame) throws SQLException {
+        AddMatchausgang panel = new AddMatchausgang();
+        int result = JOptionPane.showConfirmDialog(frame, panel,
+                "Matchausgang anlegen", JOptionPane.OK_CANCEL_OPTION);
+        if (result == JOptionPane.OK_OPTION) {
+
+            DB db = new DB();
+            if (panel.getAusgaenge().isEmpty()) {
+                JOptionPane.showMessageDialog(frame, "Bitte einen gültigen Wert eingeben");
+            } else {
+                return db.createAusgang(panel.getAusgaenge());
+            }
+
+        }
+        return null;
+    }
+
+    public void update(MainJFrame frame) throws SQLException {
+        AddMatchausgang panel = new AddMatchausgang();
+        int result = JOptionPane.showConfirmDialog(frame, panel,
+                "Matchausgang bearbeiten", JOptionPane.OK_CANCEL_OPTION);
+        if (result == JOptionPane.OK_OPTION) {
+
+            DB db = new DB();
+            if (panel.getAusgaenge().isEmpty()) {
+                JOptionPane.showMessageDialog(frame, "Bitte einen gültigen Wert eingeben");
+            } else {
+                db.updateAusgang(this.setAusgang(panel.getAusgaenge()));
+            }
+
+        }
+    }
+
 }

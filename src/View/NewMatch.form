@@ -190,11 +190,17 @@
       <Properties>
         <Property name="text" type="java.lang.String" value="Bearbeiten"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bearbeitenSiegerBtnActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="deleteSiegerBtn">
       <Properties>
         <Property name="text" type="java.lang.String" value="Entfernen"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="deleteSiegerBtnActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="addSieger">
       <Properties>

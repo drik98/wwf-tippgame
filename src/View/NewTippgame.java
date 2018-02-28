@@ -11,7 +11,6 @@ import com.teamdev.jxbrowser.chromium.Browser;
 import com.teamdev.jxbrowser.chromium.dom.By;
 import com.teamdev.jxbrowser.chromium.dom.DOMDocument;
 import com.teamdev.jxbrowser.chromium.dom.DOMElement;
-import com.teamdev.jxbrowser.chromium.dom.DOMNode;
 import com.teamdev.jxbrowser.chromium.swing.BrowserView;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
@@ -329,7 +328,7 @@ public final class NewTippgame extends javax.swing.JPanel {
             int confirmation = JOptionPane.showConfirmDialog(null, "Soll das Match wirklich gelöscht werden?");
             if (confirmation == JOptionPane.YES_OPTION) {
                 try {
-                    new DB().removeMatch(selectedMatch.getId());
+                    db.removeMatch(selectedMatch.getId());
                     selectedMatch = null;
                     initMatchList(selectedTippspiel);
                 } catch (SQLException ex) {
@@ -411,7 +410,6 @@ public final class NewTippgame extends javax.swing.JPanel {
             lines = new ArrayList(temp);
 
             List<Spieler> spielerListe = new ArrayList<>();
-            System.out.println(lines.get(0));
             while (lines.size() > 0) {
 
                 Spieler player = new Spieler(null, 0);
@@ -420,7 +418,6 @@ public final class NewTippgame extends javax.swing.JPanel {
                 String[] tipp = new String[anzahlMatches];
                 for (int j = 0; j < tipp.length; j++) {
                     tipp[j] = lines.get(0);
-                    System.out.println(lines.get(0));
                     lines.remove(0);
 
                 }
@@ -452,9 +449,9 @@ public final class NewTippgame extends javax.swing.JPanel {
             }
             print(print);
 
-            db.saveTippgameTeilnehmer(selectedTippspiel.getId(), spielerListe);
+            db.saveTippgameTeilnehmerTemp(selectedTippspiel.getId(), spielerListe);
 
-        } catch (SQLException | InvalidTippException e) {
+        } catch (SQLException | InvalidTippException | IndexOutOfBoundsException e) {
 //            System.out.println(temp.size());
 //            System.out.println(temp);
 //            String text = String.join("\n", temp);
@@ -508,14 +505,22 @@ public final class NewTippgame extends javax.swing.JPanel {
         tippsauswerten.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                browser.executeJavaScript("var modListe = document.getElementsByClassName('sp_twga833AWPb');"
+                        + "	while(modListe!=null && modListe.length > 0) { "
+                        + "		for (var i = 0; i < modListe.length; i++) {"
+                        + "    		modListe[i].remove();"
+                        + "		}"
+                        + "		modListe = document.getElementsByClassName('sp_twga833AWPb');"
+                        + "    }");
+                
                 DOMDocument document = browser.getDocument();
                 List<DOMElement> commentActorsAndBodys = document.findElements(By.className("UFICommentActorAndBody"));
                 String text = "";
                 for (DOMElement commenbtActorAndBody : commentActorsAndBodys) {
-                    String name = commenbtActorAndBody.findElement(By.className("UFICommentActorName")).getInnerText();
-                    name = (name.contains("Gruppen")) ? name.substring(0, name.lastIndexOf("Gruppen")) : name;
+                    DOMElement actorname = commenbtActorAndBody.findElement(By.className("UFICommentActorName"));
+                    String name = actorname.getInnerText();
                     String tippsUser = commenbtActorAndBody.findElement(By.className("UFICommentBody")).getInnerText();
-                    text += "\n" + name + "\n" + tippsUser;
+                    text += "\n" + name + "\n" + name + tippsUser;
                 }
                 tipps.setText(text.replaceFirst("\n", ""));
                 frame.dispose();
@@ -563,20 +568,27 @@ public final class NewTippgame extends javax.swing.JPanel {
                         + "    }");
             }
         });
+        JButton linkAufrufen = new JButton("Zum Tippspiel");
+        linkAufrufen.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                browser.loadURL(url);
+            }
+        });
 
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.BOTH;
         c.gridwidth = 4;
         c.gridx = 0;
-        c.gridy = 0;
+        c.gridy = 1;
         c.weightx = 1;
         c.weighty = 0.9;
         frame.add(view, c);
         c.gridwidth = 1;
         c.gridx = 0;
-        c.gridy = 1;
+        c.gridy = 2;
         c.weightx = 0.25;
-        c.weighty = 0.1;
+        c.weighty = 0.05;
         frame.add(vorherigeKommentareAnzeigen, c);
         c.gridx = 1;
         frame.add(mehrAnzeigen, c);
@@ -584,6 +596,11 @@ public final class NewTippgame extends javax.swing.JPanel {
         frame.add(antwortListeLoeschen, c);
         c.gridx = 3;
         frame.add(tippsauswerten, c);
+        c.gridx = 0;
+        c.gridy = 0;
+        c.weightx = 1;
+        c.gridwidth = 4;
+        frame.add(linkAufrufen, c);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
@@ -676,7 +693,7 @@ public final class NewTippgame extends javax.swing.JPanel {
                     selectedTippspiel = (Tippspiel) e.getItem();
                     initMatchList(selectedTippspiel);
                     tipps.setText(selectedTippspiel.getTipps());
-
+                    tippspielLink.setText(selectedTippspiel.getURL());
                 }
             }
         });

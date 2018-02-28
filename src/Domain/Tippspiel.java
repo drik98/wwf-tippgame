@@ -19,12 +19,21 @@ public class Tippspiel implements Serializable {
     private Long id;
     private String name;
     private String tipps;
+    private String URL;
 
-    public Tippspiel(Long id, String name, String tipps) {
+    public Tippspiel(Long id, String name, String tipps, String url) {
         this.id = id;
         this.name = name;
         this.tipps = tipps;
+        this.URL = url;
+    }
 
+    public String getURL() {
+        return URL;
+    }
+
+    public void setURL(String URL) {
+        this.URL = URL;
     }
 
     public String getTipps() {
@@ -86,9 +95,13 @@ public class Tippspiel implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (o.getClass().getTypeName().equals(Tippspiel.class.getTypeName())) {
-            return ((Tippspiel) o).getId().equals(this.getId());
-        } else {
+        try {
+            if (o.getClass().getTypeName().equals(Tippspiel.class.getTypeName())) {
+                return ((Tippspiel) o).getId().equals(this.getId());
+            } else {
+                return false;
+            }
+        } catch (Exception e) {
             return false;
         }
     }
