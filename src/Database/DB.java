@@ -4,8 +4,12 @@ import Domain.Ausgang;
 import Domain.Match;
 import Domain.Spieler;
 import Domain.Tippspiel;
+import Exceptions.TippspielSpeichernException;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -16,6 +20,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 
 /**
  * Handles all DB interaction
@@ -42,6 +48,7 @@ public class DB {
             prop.load(input);
             Class.forName(prop.getProperty("db.driver"));
             con = DriverManager.getConnection(prop.getProperty("db.url"), prop.getProperty("db.username"), prop.getProperty("db.password"));
+
         } catch (SQLException | ClassNotFoundException | IOException ex) {
             Logger.getLogger(DB.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -267,6 +274,7 @@ public class DB {
         while (rs.next()) {
             spielerlist.add(new Spieler(
                     rs.getLong("id"),
+                    rs.getLong("facebookid"),
                     rs.getString("name"),
                     rs.getInt("punkte"),
                     rs.getInt("siege"),
@@ -293,48 +301,118 @@ public class DB {
 //        return spielerlist;
 //    }
 
-    public void saveTippgameTeilnehmerTemp(Long tippspielid, List<Spieler> spielerListe) throws SQLException {
-        ps = con.prepareStatement("DELETE FROM tippgame_teilnehmer WHERE tippgame_id = ?");
-        ps.setLong(1, tippspielid);
-        ps.execute();
+    public void saveTippgameTeilnehmer(Long tippspielid, List<Spieler> spielerListe) throws TippspielSpeichernException {
 
-        int platzierung = 0;
-        int punkte = Integer.MAX_VALUE;
-        for (Spieler s : spielerListe) {
-            if (s.getPunkte() < punkte) {
-                platzierung++;
-                punkte = s.getPunkte();
+        try {
+            con.setAutoCommit(false);
+            ps = con.prepareStatement("SELECT * FROM tippgame_teilnehmer WHERE tippgame_id = ?");
+            ps.setLong(1, tippspielid);
+            ps.executeQuery();
+
+            while (rs.next()) {
+                ps = con.prepareStatement("UPDATE spieler SET punkte = punkte - ?, punkte_current_year = punkte_current_year - ?, "
+                        + "siege = siege - ?, siege_current_year = siege_current_year - ? WHERE facebookid = ?");
+                ps.setInt(1, rs.getInt("punkte"));
+                ps.setInt(2, rs.getInt("punkte"));
+                boolean istsieger = rs.getBoolean("ist_sieger");
+                ps.setInt(3, (istsieger) ? 1 : 0);
+                ps.setInt(4, (istsieger) ? 1 : 0);
+                ps.setLong(5, rs.getLong("facebookid"));
             }
-            //id
-            ps = con.prepareStatement("SELECT COALESCE(max(id),0) as id FROM tippgame_teilnehmer");
-            rs = ps.executeQuery();
-            long id = (rs.next()) ? rs.getLong("id") + 1 : 1;
 
-            //spieler id
-            ps = con.prepareStatement("SELECT COALESCE(id,(SELECT max(id) FROM spieler) + 1) as id FROM spieler WHERE name = ?");
-            ps.setString(1, s.getName());
-            rs = ps.executeQuery();
-            long spielerid = (rs.next()) ? rs.getLong("id") : 1;
-
-            ps = con.prepareStatement("INSERT INTO tippgame_teilnehmer (id, spieler_id, tippgame_id, punkte, ist_sieger, platzierung) VALUES (?, ?, ?, ?, ?, ?)");
-            ps.setLong(1, id);
-            ps.setLong(2, spielerid);
-            ps.setLong(3, tippspielid);
-            ps.setInt(4, s.getPunkte());
-            ps.setBoolean(5, platzierung == 1);
-            ps.setInt(6, platzierung);
+            ps = con.prepareStatement("DELETE FROM tippgame_teilnehmer WHERE tippgame_id = ?");
+            ps.setLong(1, tippspielid);
             ps.execute();
+
+            int platzierung = 0;
+            int punkte = Integer.MAX_VALUE;
+            for (Spieler s : spielerListe) {
+                if (s.getPunkte() < punkte) {
+                    platzierung++;
+                    punkte = s.getPunkte();
+                }
+                //id
+                ps = con.prepareStatement("SELECT COALESCE(max(id),0) as id FROM tippgame_teilnehmer");
+                rs = ps.executeQuery();
+                long id = (rs.next()) ? rs.getLong("id") + 1 : 1;
+
+                //spieler id
+                ps = con.prepareStatement("SELECT id FROM spieler WHERE facebookid = ?");
+                ps.setLong(1, s.getFacebookid());
+                rs = ps.executeQuery();
+                long spielerid;
+                if (!rs.next()) {
+                    ps = con.prepareStatement("SELECT max(id) as maxid FROM spieler");
+                    rs = ps.executeQuery();
+                    if (rs.next() && rs.getLong("maxid") != 0) {
+                        spielerid = rs.getLong("maxid") + 1;
+                    } else {
+                        spielerid = 1L;
+                    }
+                    ps = con.prepareStatement("INSERT INTO spieler (id, facebookid, name, punkte, siege, siege_current_year, punkte_current_year) VALUES (?, ?, ?, 0, 0, 0, 0)");
+                    ps.setLong(1, spielerid);
+                    ps.setLong(2, s.getFacebookid());
+                    ps.setString(3, s.getName());
+                    ps.execute();
+                } else {
+                    spielerid = rs.getLong("id");
+                    ps = con.prepareStatement("UPDATE spieler SET name = ? WHERE id = ?");
+                    ps.setString(1, s.getName());
+                    ps.setLong(2, spielerid);
+                    ps.execute();
+                }
+                System.out.println("spielerid");
+                System.out.println(spielerid);
+                boolean ist_sieger = (platzierung == 1);
+                ps = con.prepareStatement("INSERT INTO tippgame_teilnehmer (id, spieler_id, tippgame_id, punkte, ist_sieger, platzierung, facebookid) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                ps.setLong(1, id);
+                ps.setLong(2, spielerid);
+                ps.setLong(3, tippspielid);
+                ps.setInt(4, s.getPunkte());
+                ps.setBoolean(5, ist_sieger);
+                ps.setInt(6, platzierung);
+                ps.setLong(7, s.getFacebookid());
+                ps.execute();
+
+                ps = con.prepareStatement("UPDATE spieler SET punkte = punkte + ?, punkte_current_year = punkte_current_year + ?, "
+                        + "siege = siege + ?, siege_current_year = siege_current_year + ? WHERE id = ? ");
+                ps.setInt(1, s.getPunkte());
+                ps.setLong(2, s.getPunkte());
+                ps.setLong(3, (ist_sieger) ? 1 : 0);
+                ps.setInt(4, (ist_sieger) ? 1 : 0);
+                ps.setLong(5, spielerid);
+                ps.execute();
+            }
+            con.commit();
+            con.setAutoCommit(true);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Fehler beim Speichern von Spielern");
+            if (con != null) {
+                try {
+                    System.err.print("Transaction is being rolled back");
+                    con.rollback();
+                    con.setAutoCommit(true);
+                } catch (SQLException excep) {
+                    throw new TippspielSpeichernException("Fehler beim Speichern von Tippspiel!");
+                }
+            }
         }
     }
 
-    public ArrayList<Spieler> getSpielerDieNichtGetipptHaben(long tippspielid) throws SQLException {
+    public ArrayList<Spieler> getSpielerDieNichtGetipptHaben(ArrayList<String> spieler) throws SQLException {
         ArrayList<Spieler> spielerlist = new ArrayList<>();
-        ps = con.prepareStatement("SELECT * FROM spieler WHERE id NOT IN (SELECT spieler_id FROM tippgame_teilnehmer WHERE tippgame_id = ?)");
-        ps.setLong(1, tippspielid);
+        if (spieler.isEmpty()) {
+            return spielerlist;
+        }
+
+        ps = con.prepareStatement("SELECT * FROM spieler WHERE name NOT IN (?)");
+        ps.setString(1, String.join(",", spieler));
         rs = ps.executeQuery();
         while (rs.next()) {
             spielerlist.add(new Spieler(
                     rs.getLong("id"),
+                    rs.getLong("facebookid"),
                     rs.getString("name"),
                     rs.getInt("punkte"),
                     rs.getInt("siege"),
@@ -384,15 +462,34 @@ public class DB {
     }
 
     public void updateSpieler(Spieler s) throws SQLException {
-        ps = con.prepareStatement("UPDATE spieler SET name = ?, punkte = ?, punkte_current_year = ?, siege = ?, siege_current_year = ? "
+        ps = con.prepareStatement("UPDATE spieler SET name = ?, punkte = ?, punkte_current_year = ?, siege = ?, siege_current_year = ?, facebookid = ? "
                 + "WHERE id = ?");
         ps.setString(1, s.getName());
         ps.setInt(2, s.getPunkte());
         ps.setInt(3, s.getPunkte_current_year());
         ps.setInt(4, s.getSiege());
         ps.setInt(5, s.getSiege_current_year());
-        ps.setLong(6, s.getId());
+        ps.setLong(6, s.getFacebookid());
+        ps.setLong(7, s.getId());
         ps.execute();
+    }
+
+    public String getPlatzierungen(Long id) throws SQLException {
+        ps = con.prepareStatement("SELECT t.platzierung as platzierung, s.name as name, t.punkte as punkte FROM tippgame_teilnehmer t LEFT JOIN spieler s ON s.id = t.spieler_id WHERE tippgame_id = ?");
+        ps.setLong(1, id);
+        rs = ps.executeQuery();
+        String ret = "";
+        int counter = 0;
+        while (rs.next()) {
+            counter++;
+            ret += rs.getString("platzierung") + ". " + rs.getString("name") + " : " + rs.getInt("punkte") + "\n";
+        }
+        ps = con.prepareStatement("SELECT avg(punkte) as averagePunkte FROM tippgame_teilnehmer WHERE tippgame_id = ?");
+        ps.setLong(1, id);
+        rs = ps.executeQuery();
+        ret += "\nAnzahl Teilnehmer: " + counter + "\n";
+        ret += "Durchschnittspunktzahl: " + ((rs.next()) ? rs.getDouble("averagePunkte") : 0);
+        return ret;
     }
 
 }

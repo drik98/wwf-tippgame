@@ -1,16 +1,9 @@
 package Main;
 
-import Database.DB;
 import Help.InitJFrame;
 import View.MainJFrame;
-import java.io.IOException;
-import javax.swing.JOptionPane;
 
 /**
- * Main-klasse wird ausgefuehrt bei start initialieisert Main-frame und menubar,
- * ruft startseite auf
- *
- * @author nrg, sht
  */
 public class Main {
 

@@ -278,6 +278,9 @@
       <Properties>
         <Property name="text" type="java.lang.String" value="Zeige Platzierungen"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="hinzufuegenBtn4ActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="tippgamePanel4">
       <Properties>

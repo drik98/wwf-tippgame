@@ -6,6 +6,7 @@ import Domain.Match;
 import Domain.Spieler;
 import Domain.Tippspiel;
 import Exceptions.InvalidTippException;
+import Exceptions.TippspielSpeichernException;
 import Help.InitJFrame;
 import com.teamdev.jxbrowser.chromium.Browser;
 import com.teamdev.jxbrowser.chromium.dom.By;
@@ -19,12 +20,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JButton;
@@ -216,6 +221,11 @@ public final class NewTippgame extends javax.swing.JPanel {
         });
 
         hinzufuegenBtn4.setText("Zeige Platzierungen");
+        hinzufuegenBtn4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                hinzufuegenBtn4ActionPerformed(evt);
+            }
+        });
 
         tippgamePanel4.setText("Tippspiel Link");
 
@@ -415,6 +425,8 @@ public final class NewTippgame extends javax.swing.JPanel {
                 Spieler player = new Spieler(null, 0);
                 player.setName(lines.get(0));
                 lines.remove(0);
+                player.setFacebookid(Long.parseLong(lines.get(0)));
+                lines.remove(0);
                 String[] tipp = new String[anzahlMatches];
                 for (int j = 0; j < tipp.length; j++) {
                     tipp[j] = lines.get(0);
@@ -422,7 +434,7 @@ public final class NewTippgame extends javax.swing.JPanel {
 
                 }
                 player.setTipp(tipp, this.matchliste);
-                counter += anzahlMatches + 1;
+                counter += anzahlMatches + 2;
                 spielerListe.add(player);
                 print += player.getName() + "\n";
                 print += player.getPunkte() + "\n";
@@ -449,33 +461,72 @@ public final class NewTippgame extends javax.swing.JPanel {
             }
             print(print);
 
-            db.saveTippgameTeilnehmerTemp(selectedTippspiel.getId(), spielerListe);
+            db.saveTippgameTeilnehmer(selectedTippspiel.getId(), spielerListe);
 
-        } catch (SQLException | InvalidTippException | IndexOutOfBoundsException e) {
-//            System.out.println(temp.size());
-//            System.out.println(temp);
-//            String text = String.join("\n", temp);
+        } catch (SQLException | InvalidTippException | IndexOutOfBoundsException | NumberFormatException e) {
             e.printStackTrace();
             int startindex = 0;
-            for (int i = 0; i < counter - anzahlMatches; i++) {
+            for (int i = 0; i < counter - anzahlMatches - 1; i++) {
                 startindex += temp.get(i).length() + 1;
             }
-            int endIndex = startindex + temp.get(counter - anzahlMatches).length();
-//            int startIndex = tipps.getText().indexOf(temp.get(counter));
-//            int endIndex = startindex + temp.get(counter).length();
-//            tipps.setCaretPosition(tipps.getDocument().getDefaultRootElement().getElement(counter - anzahlMatches).getStartOffset());
-            printError(e.getMessage());
+            int endIndex = startindex + temp.get(counter - anzahlMatches).length() + 1;
+            printError("Ungültiger Tipp, Fehler bei der Auswertung.");
             tipps.requestFocus();
             tipps.select(startindex, endIndex);
+        } catch (TippspielSpeichernException e) {
+            printError(e.getMessage());
         }
     }//GEN-LAST:event_auswertenBtnActionPerformed
 
     private void hinzufuegenBtn3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hinzufuegenBtn3ActionPerformed
         ausgabe.setText("");
+        ausgabe.setBackground(Color.WHITE);
+        selectedTippspiel.setTipps(tipps.getText()).update();
+        int counter = -1;
+        int anzahlMatches = 0;
+        ArrayList<String> spielerListe = new ArrayList<>();
+        List<String> temp = new ArrayList<>();
         try {
-            ArrayList<Spieler> nichtGetippt = db.getSpielerDieNichtGetipptHaben(selectedTippspiel.getId());
+            anzahlMatches = db.getAnzahlMatches(selectedTippspiel);
+            List<String> lines = Arrays.asList(selectedTippspiel.getTipps().split("\n"));
 
-            int counter = 0;
+            lines.stream().filter((x) -> (!x.isEmpty()))
+                    .forEach((x) -> {
+                        temp.add(x);
+                    });
+            tipps.setText(String.join("\n", temp));
+            lines = new ArrayList(temp);
+
+            while (lines.size() > 0) {
+                String name = lines.get(0);
+                spielerListe.add(name);
+                lines.remove(0);
+                lines.remove(0);
+                for (int j = 0; j < anzahlMatches; j++) {
+                    if (j == 0) {
+                        if (!lines.get(0).contains(name)) {
+                            throw new InvalidTippException("Fehlerhafter Tipp");
+                        }
+                    }
+                    lines.remove(0);
+                }
+                counter += anzahlMatches + 2;
+            }
+
+        } catch (SQLException | InvalidTippException | IndexOutOfBoundsException | NumberFormatException e) {
+            int startindex = 0;
+            for (int i = 0; i < counter - anzahlMatches - 1; i++) {
+                startindex += temp.get(i).length() + 1;
+            }
+            int endIndex = startindex + temp.get(counter - anzahlMatches).length() + 1;
+            printError("Ungültiger Tipp, Fehler bei der Auswertung und Bestimmung von Mitgliedern, die noch nicht getippt haben.");
+            tipps.requestFocus();
+            tipps.select(startindex, endIndex);
+            return;
+        }
+        try {
+            ArrayList<Spieler> nichtGetippt = db.getSpielerDieNichtGetipptHaben(spielerListe);
+            counter = 0;
             String auswertung = "";
             for (Spieler player : nichtGetippt) {
                 auswertung += player.getName() + "\n";
@@ -487,8 +538,7 @@ public final class NewTippgame extends javax.swing.JPanel {
             print(auswertung);
 
         } catch (SQLException ex) {
-            Logger.getLogger(NewTippgame.class.getName()).log(Level.SEVERE, null, ex);
-
+            printError("Fehler beim Bestimmen von Mitgliedern, die noch nicht getippt haben.");
         }
     }//GEN-LAST:event_hinzufuegenBtn3ActionPerformed
 
@@ -505,22 +555,23 @@ public final class NewTippgame extends javax.swing.JPanel {
         tippsauswerten.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                browser.executeJavaScript("var modListe = document.getElementsByClassName('sp_twga833AWPb');"
+                browser.executeJavaScript("var modListe = document.getElementsByClassName('_2ltv');"
                         + "	while(modListe!=null && modListe.length > 0) { "
                         + "		for (var i = 0; i < modListe.length; i++) {"
                         + "    		modListe[i].remove();"
                         + "		}"
-                        + "		modListe = document.getElementsByClassName('sp_twga833AWPb');"
+                        + "		modListe = document.getElementsByClassName('_2ltv');"
                         + "    }");
-                
+
                 DOMDocument document = browser.getDocument();
                 List<DOMElement> commentActorsAndBodys = document.findElements(By.className("UFICommentActorAndBody"));
                 String text = "";
                 for (DOMElement commenbtActorAndBody : commentActorsAndBodys) {
                     DOMElement actorname = commenbtActorAndBody.findElement(By.className("UFICommentActorName"));
+                    String id = getParameterByName("id", actorname.getAttribute("data-hovercard"));
                     String name = actorname.getInnerText();
                     String tippsUser = commenbtActorAndBody.findElement(By.className("UFICommentBody")).getInnerText();
-                    text += "\n" + name + "\n" + name + tippsUser;
+                    text += "\n" + name + "\n" + id + "\n" + name + tippsUser;
                 }
                 tipps.setText(text.replaceFirst("\n", ""));
                 frame.dispose();
@@ -607,8 +658,32 @@ public final class NewTippgame extends javax.swing.JPanel {
         browser.loadURL(url);
     }//GEN-LAST:event_loadTippsActionPerformed
 
+    private void hinzufuegenBtn4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hinzufuegenBtn4ActionPerformed
+        ausgabe.setText("");
+        try {
+            print(db.getPlatzierungen(selectedTippspiel.getId()));
+        } catch (SQLException e) {
+            printError("Fehler beim Bestimmen der Platzierungen");
+        }
+    }//GEN-LAST:event_hinzufuegenBtn4ActionPerformed
+
     private void print(Object text) {
         ausgabe.setText(ausgabe.getText() + text + "\n");
+    }
+
+    private String getParameterByName(String param, String url) {
+        try {
+
+            String[] params = url.substring(url.indexOf("?") + 1).split("&");
+            for (String s : params) {
+                if (s.split("=")[0].equals(param)) {
+                    return s.split("=")[1];
+                }
+            }
+        } catch (Exception e) {
+
+        }
+        return null;
     }
 
     public void printError(Object text) {
@@ -708,10 +783,6 @@ public final class NewTippgame extends javax.swing.JPanel {
             }
         });
 
-    }
-
-    private boolean isNaN(String s) {
-        return !(s != null && s.matches("[-+]?\\d*\\.?\\d+"));
     }
 
 

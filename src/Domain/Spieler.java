@@ -13,6 +13,7 @@ import javax.swing.JOptionPane;
 public class Spieler {
 
     private Long id;
+    private long facebookid;
     private String name;
     private int punkte_current_year;
     private int siege_current_year;
@@ -21,6 +22,14 @@ public class Spieler {
 
     public Long getId() {
         return id;
+    }
+
+    public long getFacebookid() {
+        return facebookid;
+    }
+
+    public void setFacebookid(long facebookid) {
+        this.facebookid = facebookid;
     }
 
     public void setId(Long id) {
@@ -60,8 +69,9 @@ public class Spieler {
         this.punkte = punkte;
     }
 
-    public Spieler(Long id, String name, int punkte, int siege, int punkte_current_year, int siege_current_year) {
+    public Spieler(Long id, Long facebookid, String name, int punkte, int siege, int punkte_current_year, int siege_current_year) {
         this.id = id;
+        this.facebookid = facebookid;
         this.name = name;
         this.punkte_current_year = punkte_current_year;
         this.siege_current_year = siege_current_year;
