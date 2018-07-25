@@ -8,31 +8,39 @@ import Domain.Tippspiel;
 import Exceptions.InvalidTippException;
 import Exceptions.TippspielSpeichernException;
 import Help.InitJFrame;
-import com.teamdev.jxbrowser.chromium.Browser;
-import com.teamdev.jxbrowser.chromium.dom.By;
-import com.teamdev.jxbrowser.chromium.dom.DOMDocument;
-import com.teamdev.jxbrowser.chromium.dom.DOMElement;
-import com.teamdev.jxbrowser.chromium.swing.BrowserView;
+import com.google.gson.Gson;
+import com.sun.webkit.dom.HTMLBodyElementImpl;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.PrintWriter;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.HttpCookie;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JButton;
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
+import javafx.event.EventHandler;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
@@ -544,88 +552,90 @@ public final class NewTippgame extends javax.swing.JPanel {
 
     private void loadTippsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadTippsActionPerformed
         String url = tippspielLink.getText();
-        Browser browser = new Browser();
-        BrowserView view = new BrowserView(browser);
+
+//        Browser browser = new Browser();
+//        BrowserView view = new BrowserView(browser);
         JFrame frame = new JFrame("Facebook WWF Tippspiel");
         frame.setLayout(new GridBagLayout());
         frame.setSize(this.frame.getSize());
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-        JButton tippsauswerten = new JButton("Tipps einlesen");
-        tippsauswerten.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                browser.executeJavaScript("var modListe = document.getElementsByClassName('_2ltv');"
-                        + "	while(modListe!=null && modListe.length > 0) { "
-                        + "		for (var i = 0; i < modListe.length; i++) {"
-                        + "    		modListe[i].remove();"
-                        + "		}"
-                        + "		modListe = document.getElementsByClassName('_2ltv');"
-                        + "    }");
-
-                DOMDocument document = browser.getDocument();
-                List<DOMElement> commentActorsAndBodys = document.findElements(By.className("UFICommentActorAndBody"));
-                String text = "";
-                for (DOMElement commenbtActorAndBody : commentActorsAndBodys) {
-                    DOMElement actorname = commenbtActorAndBody.findElement(By.className("UFICommentActorName"));
-                    String id = getParameterByName("id", actorname.getAttribute("data-hovercard"));
-                    String name = actorname.getInnerText();
-                    String tippsUser = commenbtActorAndBody.findElement(By.className("UFICommentBody")).getInnerText();
-                    text += "\n" + name + "\n" + id + "\n" + name + tippsUser;
-                }
-                tipps.setText(text.replaceFirst("\n", ""));
-                frame.dispose();
-            }
-        });
-
-        JButton vorherigeKommentareAnzeigen = new JButton("Vorherige Kommentare anzeigen");
-        vorherigeKommentareAnzeigen.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                browser.executeJavaScript("var vorherigeKommentareAnzeigen = document.getElementsByClassName('UFIPagerLink');"
-                        + "	while(vorherigeKommentareAnzeigen!=null && vorherigeKommentareAnzeigen.length > 0) {"
-                        + "		for (var i = 0; i < vorherigeKommentareAnzeigen.length; i++) {"
-                        + "    		vorherigeKommentareAnzeigen[i].click();"
-                        + "		}"
-                        + "		vorherigeKommentareAnzeigen = document.getElementById('UFIPagerLink');"
-                        + "    }");
-            }
-        });
-
-        JButton mehrAnzeigen = new JButton("Mehr anzeigen");
-        mehrAnzeigen.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                browser.executeJavaScript("var mehrAnzeigen = document.getElementsByClassName('_5v47 fss');"
-                        + "	while(mehrAnzeigen!=null && mehrAnzeigen.length > 0) { "
-                        + "		for (var i = 0; i < mehrAnzeigen.length; i++) {"
-                        + "    		mehrAnzeigen[i].click();"
-                        + "		}"
-                        + "		 mehrAnzeigen = document.getElementsByClassName('_5v47 fss');"
-                        + "    }");
-            }
-        });
-
-        JButton antwortListeLoeschen = new JButton("Antworten Löschen");
-        antwortListeLoeschen.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                browser.executeJavaScript("var antwortListeLoeschen = document.getElementsByClassName('UFIReplyList');"
-                        + "	while(antwortListeLoeschen!=null && antwortListeLoeschen.length > 0) { "
-                        + "		for (var i = 0; i < antwortListeLoeschen.length; i++) {"
-                        + "    		antwortListeLoeschen[i].remove();"
-                        + "		}"
-                        + "		antwortListeLoeschen = document.getElementsByClassName('UFIReplyList');"
-                        + "    }");
-            }
-        });
-        JButton linkAufrufen = new JButton("Zum Tippspiel");
-        linkAufrufen.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                browser.loadURL(url);
-            }
-        });
+//        JButton tippsauswerten = new JButton("Tipps einlesen");
+//        tippsauswerten.addActionListener(new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                webEngine.executeScript("var modListe = document.getElementsByClassName('_2ltv');"
+//                        + "	while(modListe!=null && modListe.length > 0) { "
+//                        + "		for (var i = 0; i < modListe.length; i++) {"
+//                        + "    		modListe[i].remove();"
+//                        + "		}"
+//                        + "		modListe = document.getElementsByClassName('_2ltv');"
+//                        + "    }");
+//                DOMDocument document = browser.getDocument();
+//                List<DOMElement> commentActorsAndBodys = document.findElements(By.className("UFICommentActorAndBody"));
+//                String text = "";
+//                for (DOMElement commenbtActorAndBody : commentActorsAndBodys) {
+//                    DOMElement actorname = commenbtActorAndBody.findElement(By.className("UFICommentActorName"));
+//                    String id = getParameterByName("id", actorname.getAttribute("data-hovercard"));
+//                    String name = actorname.getInnerText();
+//                    String tippsUser = commenbtActorAndBody.findElement(By.className("UFICommentBody")).getInnerText();
+//                    text += "\n" + name + "\n" + id + "\n" + name + tippsUser;
+//                }
+//                tipps.setText(text.replaceFirst("\n", ""));
+//                frame.dispose();
+//            }
+//        });
+//
+//        JButton vorherigeKommentareAnzeigen = new JButton("Vorherige Kommentare anzeigen");
+//        vorherigeKommentareAnzeigen.addActionListener(new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                webEngine.executeScript("var vorherigeKommentareAnzeigen = document.getElementsByClassName('UFIPagerLink');"
+//                        + "	while(vorherigeKommentareAnzeigen!=null && vorherigeKommentareAnzeigen.length > 0) {"
+//                        + "		for (var i = 0; i < vorherigeKommentareAnzeigen.length; i++) {"
+//                        + "    		vorherigeKommentareAnzeigen[i].click();"
+//                        + "		}"
+//                        + "		vorherigeKommentareAnzeigen = document.getElementById('UFIPagerLink');"
+//                        + "    }");
+//            }
+//        });
+//
+//        JButton mehrAnzeigen = new JButton("Mehr anzeigen");
+//        mehrAnzeigen.addActionListener(new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                webEngine.executeScript("var mehrAnzeigen = document.getElementsByClassName('_5v47 fss');"
+//                        + "	while(mehrAnzeigen!=null && mehrAnzeigen.length > 0) { "
+//                        + "		for (var i = 0; i < mehrAnzeigen.length; i++) {"
+//                        + "    		mehrAnzeigen[i].click();"
+//                        + "		}"
+//                        + "		 mehrAnzeigen = document.getElementsByClassName('_5v47 fss');"
+//                        + "    }");
+//            }
+//        });
+//
+//        JButton antwortListeLoeschen = new JButton("Antworten Löschen");
+//        antwortListeLoeschen.addActionListener(new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                webEngine.executeScript("var antwortListeLoeschen = document.getElementsByClassName('UFIReplyList');"
+//                        + "	while(antwortListeLoeschen!=null && antwortListeLoeschen.length > 0) { "
+//                        + "		for (var i = 0; i < antwortListeLoeschen.length; i++) {"
+//                        + "    		antwortListeLoeschen[i].remove();"
+//                        + "		}"
+//                        + "		antwortListeLoeschen = document.getElementsByClassName('UFIReplyList');"
+//                        + "    }");
+//            }
+//        });
+//        JButton linkAufrufen = new JButton("Zum Tippspiel");
+//        linkAufrufen.addActionListener(new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+////                browser.loadURL(url);
+//                webEngine.executeScript("window.location.href=\"" + url + "\"");
+//            }
+//        });
+        JFXPanel fxPanel = new JFXPanel();
 
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.BOTH;
@@ -634,28 +644,47 @@ public final class NewTippgame extends javax.swing.JPanel {
         c.gridy = 1;
         c.weightx = 1;
         c.weighty = 0.9;
-        frame.add(view, c);
-        c.gridwidth = 1;
-        c.gridx = 0;
-        c.gridy = 2;
-        c.weightx = 0.25;
-        c.weighty = 0.05;
-        frame.add(vorherigeKommentareAnzeigen, c);
-        c.gridx = 1;
-        frame.add(mehrAnzeigen, c);
-        c.gridx = 2;
-        frame.add(antwortListeLoeschen, c);
-        c.gridx = 3;
-        frame.add(tippsauswerten, c);
-        c.gridx = 0;
-        c.gridy = 0;
-        c.weightx = 1;
-        c.gridwidth = 4;
-        frame.add(linkAufrufen, c);
+        frame.add(fxPanel, c);
+//        c.gridwidth = 1;
+//        c.gridx = 0;
+//        c.gridy = 2;
+//        c.weightx = 0.25;
+//        c.weighty = 0.05;
+//        frame.add(vorherigeKommentareAnzeigen, c);
+//        c.gridx = 1;
+//        frame.add(mehrAnzeigen, c);
+//        c.gridx = 2;
+//        frame.add(antwortListeLoeschen, c);
+//        c.gridx = 3;
+//        frame.add(tippsauswerten, c);
+//        c.gridx = 0;
+//        c.gridy = 0;
+//        c.weightx = 1;
+//        c.gridwidth = 4;
+//        frame.add(linkAufrufen, c);
         frame.setLocationRelativeTo(null);
+       
+      
         frame.setVisible(true);
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
 
-        browser.loadURL(url);
+               
+                WebView browser = new WebView();
+                WebEngine webEngine = browser.getEngine();
+                webEngine.load(url);
+                Scene scene = getScene(browser, webEngine, url);
+
+                fxPanel.setScene(scene);
+               
+            }
+
+        });
+
+//        browser.loadURL(url);
+//        Application.launch(Auswertung.class, url);
+//        Platform.setImplicitExit(false);
     }//GEN-LAST:event_loadTippsActionPerformed
 
     private void hinzufuegenBtn4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hinzufuegenBtn4ActionPerformed
@@ -783,6 +812,86 @@ public final class NewTippgame extends javax.swing.JPanel {
             }
         });
 
+    }
+
+    private Scene getScene(WebView browser, WebEngine webEngine, String url) {
+        Button reload = new Button("Seite neuladen");
+        Button mehrAnzeigen = new Button("Mehr Anzeigen");
+        Button vorherigeKommentare = new Button("Alle Kommentare zeigen");
+        Button antwortenLoeschen = new Button("Antworten Löschen");
+        Button tippsAuswerten = new Button("Auswerten");
+
+        reload.setOnAction(new EventHandler<javafx.event.ActionEvent>() {
+
+            @Override
+            public void handle(javafx.event.ActionEvent event) {
+                webEngine.executeScript("window.location.href=\"" + url + "\"");
+                
+            }
+        });
+        antwortenLoeschen.setOnAction(new EventHandler<javafx.event.ActionEvent>() {
+
+            @Override
+            public void handle(javafx.event.ActionEvent event) {
+                webEngine.executeScript("var antwortListeLoeschen = document.getElementsByClassName('UFIReplyList');"
+                        + "	while(antwortListeLoeschen!=null && antwortListeLoeschen.length > 0) { "
+                        + "		for (var i = 0; i < antwortListeLoeschen.length; i++) {"
+                        + "    		antwortListeLoeschen[i].remove();"
+                        + "		}"
+                        + "		antwortListeLoeschen = document.getElementsByClassName('UFIReplyList');"
+                        + "    }");
+            }
+        });
+
+        mehrAnzeigen.setOnAction(new EventHandler<javafx.event.ActionEvent>() {
+
+            @Override
+            public void handle(javafx.event.ActionEvent event) {
+                webEngine.executeScript("var mehrAnzeigen = document.getElementsByClassName('_5v47 fss');"
+                        + "	while(mehrAnzeigen!=null && mehrAnzeigen.length > 0) { "
+                        + "		for (var i = 0; i < mehrAnzeigen.length; i++) {"
+                        + "    		mehrAnzeigen[i].click();"
+                        + "		}"
+                        + "		 mehrAnzeigen = document.getElementsByClassName('_5v47 fss');"
+                        + "    }");
+            }
+        });
+        vorherigeKommentare.setOnAction(new EventHandler<javafx.event.ActionEvent>() {
+
+            @Override
+            public void handle(javafx.event.ActionEvent event) {
+                webEngine.executeScript("var vorherigeKommentareAnzeigen = document.getElementsByClassName('UFIPagerLink');"
+                        + "	while(vorherigeKommentareAnzeigen!=null && vorherigeKommentareAnzeigen.length > 0) {"
+                        + "		for (var i = 0; i < vorherigeKommentareAnzeigen.length; i++) {"
+                        + "    		vorherigeKommentareAnzeigen[i].click();"
+                        + "		}"
+                        + "		vorherigeKommentareAnzeigen = document.getElementById('UFIPagerLink');"
+                        + "    }");
+
+            }
+        });
+
+        tippsAuswerten.setOnAction(new EventHandler<javafx.event.ActionEvent>() {
+
+            @Override
+            public void handle(javafx.event.ActionEvent event) {
+                // Load a page from remote url.
+                webEngine.load(url);
+                HTMLBodyElementImpl p = (HTMLBodyElementImpl) webEngine.executeScript("document.body");
+                System.out.println("HUUUUUUUUHN");
+                System.out.println(p.getInnerHTML());
+            }
+        });
+        VBox root = new VBox();
+//        root.setPadding(5);
+        root.setSpacing(5);
+
+        HBox hbox = new HBox();
+        hbox.getChildren().addAll(reload, mehrAnzeigen, vorherigeKommentare, antwortenLoeschen, tippsAuswerten);
+        root.getChildren().addAll(hbox, browser);
+
+        Scene scene = new Scene(root);
+        return scene;
     }
 
 
